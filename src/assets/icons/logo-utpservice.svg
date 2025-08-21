@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 80">
+  <!-- UP letters in green -->
+  <text x="20" y="50" font-family="Arial, sans-serif" font-size="36" font-weight="bold" fill="#10b981">UP</text>
+  
+  <!-- Circuit connection line above U -->
+  <line x1="15" y1="15" x2="45" y2="15" stroke="#10b981" stroke-width="3"/>
+  <circle cx="15" cy="15" r="3" fill="#10b981"/>
+  <circle cx="45" cy="15" r="3" fill="#10b981"/>
+  
+  <!-- SERVICES text below -->
+  <text x="70" y="50" font-family="Arial, sans-serif" font-size="24" font-weight="600" fill="#10b981">SERVICES</text>
+  
+  <!-- Tagline -->
+  <text x="20" y="70" font-family="Arial, sans-serif" font-size="12" font-weight="400" fill="#10b981">SIEMPRE HACIENDO LO MEJOR</text>
+</svg>

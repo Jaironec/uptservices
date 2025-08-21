@@ -1,0 +1,76 @@
+/* ===================================
+   Utilidades - Colores
+   =================================== */
+
+/* Colores de fondo */
+.bg-primary { background-color: var(--bg-primary); }
+.bg-secondary { background-color: var(--bg-secondary); }
+.bg-tertiary { background-color: var(--bg-tertiary); }
+.bg-dark { background-color: var(--bg-dark); }
+
+.bg-primary-color { background-color: var(--primary-color); }
+.bg-secondary-color { background-color: var(--secondary-color); }
+.bg-success { background-color: var(--success-color); }
+.bg-warning { background-color: var(--warning-color); }
+.bg-error { background-color: var(--error-color); }
+.bg-info { background-color: var(--info-color); }
+
+/* Gradientes */
+.bg-gradient-primary {
+    background: linear-gradient(135deg, var(--primary-color) 0%, var(--secondary-color) 100%);
+}
+
+.bg-gradient-secondary {
+    background: linear-gradient(135deg, var(--secondary-color) 0%, var(--primary-color) 100%);
+}
+
+.bg-gradient-dark {
+    background: linear-gradient(135deg, var(--bg-dark) 0%, var(--text-primary) 100%);
+}
+
+/* Bordes */
+.border-primary { border-color: var(--primary-color); }
+.border-secondary { border-color: var(--secondary-color); }
+.border-success { border-color: var(--success-color); }
+.border-warning { border-color: var(--warning-color); }
+.border-error { border-color: var(--error-color); }
+.border-light { border-color: var(--border-light); }
+.border-dark { border-color: var(--border-dark); }
+
+/* Sombras con colores */
+.shadow-primary {
+    box-shadow: 0 4px 14px rgba(102, 126, 234, 0.25);
+}
+
+.shadow-secondary {
+    box-shadow: 0 4px 14px rgba(118, 75, 162, 0.25);
+}
+
+.shadow-success {
+    box-shadow: 0 4px 14px rgba(40, 167, 69, 0.25);
+}
+
+.shadow-warning {
+    box-shadow: 0 4px 14px rgba(255, 193, 7, 0.25);
+}
+
+.shadow-error {
+    box-shadow: 0 4px 14px rgba(220, 53, 69, 0.25);
+}
+
+/* Estados hover */
+.hover\:bg-primary:hover { background-color: var(--primary-color); }
+.hover\:bg-secondary:hover { background-color: var(--secondary-color); }
+.hover\:bg-dark:hover { background-color: var(--bg-dark); }
+
+.hover\:text-primary:hover { color: var(--primary-color); }
+.hover\:text-white:hover { color: white; }
+
+/* Transparencias */
+.bg-transparent { background-color: transparent; }
+.bg-opacity-10 { background-color: rgba(255, 255, 255, 0.1); }
+.bg-opacity-25 { background-color: rgba(255, 255, 255, 0.25); }
+.bg-opacity-50 { background-color: rgba(255, 255, 255, 0.5); }
+.bg-opacity-75 { background-color: rgba(255, 255, 255, 0.75); }
+.bg-opacity-90 { background-color: rgba(255, 255, 255, 0.9); }
+

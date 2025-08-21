@@ -1,0 +1,478 @@
+/* ===================================
+   Utilidades - Accesibilidad
+   =================================== */
+
+/* Screen reader only */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.sr-only-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* Focus visible */
+.focus\:outline-none:focus {
+    outline: none;
+}
+
+.focus\:outline:focus {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.focus\:ring:focus {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+.focus\:ring-2:focus {
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+}
+
+.focus\:ring-4:focus {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+}
+
+.focus\:ring-8:focus {
+    box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Focus within */
+.focus-within\:ring:focus-within {
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.3);
+}
+
+.focus-within\:ring-2:focus-within {
+    box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.3);
+}
+
+.focus-within\:ring-4:focus-within {
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.3);
+}
+
+.focus-within\:ring-8:focus-within {
+    box-shadow: 0 0 0 8px rgba(102, 126, 234, 0.3);
+}
+
+/* Estados de foco */
+.focus\:bg-primary:focus {
+    background-color: var(--primary-color);
+}
+
+.focus\:bg-secondary:focus {
+    background-color: var(--secondary-color);
+}
+
+.focus\:text-white:focus {
+    color: white;
+}
+
+.focus\:text-primary:focus {
+    color: var(--primary-color);
+}
+
+.focus\:border-primary:focus {
+    border-color: var(--primary-color);
+}
+
+.focus\:border-secondary:focus {
+    border-color: var(--secondary-color);
+}
+
+/* Estados de hover con foco */
+.hover\:focus\:bg-primary:hover:focus {
+    background-color: var(--primary-color);
+}
+
+.hover\:focus\:bg-secondary:hover:focus {
+    background-color: var(--secondary-color);
+}
+
+.hover\:focus\:text-white:hover:focus {
+    color: white;
+}
+
+.hover\:focus\:text-primary:hover:focus {
+    color: var(--primary-color);
+}
+
+/* Estados de active */
+.active\:bg-primary:active {
+    background-color: var(--primary-color);
+}
+
+.active\:bg-secondary:active {
+    background-color: var(--secondary-color);
+}
+
+.active\:text-white:active {
+    color: white;
+}
+
+.active\:text-primary:active {
+    color: var(--primary-color);
+}
+
+.active\:scale-95:active {
+    transform: scale(0.95);
+}
+
+.active\:scale-90:active {
+    transform: scale(0.9);
+}
+
+/* Estados de disabled */
+.disabled\:opacity-50:disabled {
+    opacity: 0.5;
+}
+
+.disabled\:opacity-75:disabled {
+    opacity: 0.75;
+}
+
+.disabled\:cursor-not-allowed:disabled {
+    cursor: not-allowed;
+}
+
+.disabled\:pointer-events-none:disabled {
+    pointer-events: none;
+}
+
+/* Estados de selected */
+.selected\:bg-primary[aria-selected="true"] {
+    background-color: var(--primary-color);
+}
+
+.selected\:text-white[aria-selected="true"] {
+    color: white;
+}
+
+.selected\:border-primary[aria-selected="true"] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de checked */
+.checked\:bg-primary:checked {
+    background-color: var(--primary-color);
+}
+
+.checked\:text-white:checked {
+    color: white;
+}
+
+.checked\:border-primary:checked {
+    border-color: var(--primary-color);
+}
+
+/* Estados de expanded */
+.expanded\:bg-primary[aria-expanded="true"] {
+    background-color: var(--primary-color);
+}
+
+.expanded\:text-white[aria-expanded="true"] {
+    color: white;
+}
+
+.expanded\:border-primary[aria-expanded="true"] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de pressed */
+.pressed\:bg-primary[aria-pressed="true"] {
+    background-color: var(--primary-color);
+}
+
+.pressed\:text-white[aria-pressed="true"] {
+    color: white;
+}
+
+.pressed\:border-primary[aria-pressed="true"] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de current */
+.current\:bg-primary[aria-current="true"] {
+    background-color: var(--primary-color);
+}
+
+.current\:text-white[aria-current="true"] {
+    color: white;
+}
+
+.current\:border-primary[aria-current="true"] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de invalid */
+.invalid\:border-error:invalid {
+    border-color: var(--error-color);
+}
+
+.invalid\:bg-error:invalid {
+    background-color: rgba(220, 53, 69, 0.1);
+}
+
+.invalid\:text-error:invalid {
+    color: var(--error-color);
+}
+
+/* Estados de valid */
+.valid\:border-success:valid {
+    border-color: var(--success-color);
+}
+
+.valid\:bg-success:valid {
+    background-color: rgba(40, 167, 69, 0.1);
+}
+
+.valid\:text-success:valid {
+    color: var(--success-color);
+}
+
+/* Estados de required */
+.required\:border-warning:required {
+    border-color: var(--warning-color);
+}
+
+.required\:bg-warning:required {
+    background-color: rgba(255, 193, 7, 0.1);
+}
+
+.required\:text-warning:required {
+    color: var(--warning-color);
+}
+
+/* Estados de optional */
+.optional\:border-info:optional {
+    border-color: var(--info-color);
+}
+
+.optional\:bg-info:optional {
+    background-color: rgba(23, 162, 184, 0.1);
+}
+
+.optional\:text-info:optional {
+    color: var(--info-color);
+}
+
+/* Estados de loading */
+.loading\:opacity-75[aria-busy="true"] {
+    opacity: 0.75;
+}
+
+.loading\:cursor-wait[aria-busy="true"] {
+    cursor: wait;
+}
+
+.loading\:pointer-events-none[aria-busy="true"] {
+    pointer-events: none;
+}
+
+/* Estados de busy */
+.busy\:opacity-50[aria-busy="true"] {
+    opacity: 0.5;
+}
+
+.busy\:cursor-wait[aria-busy="true"] {
+    cursor: wait;
+}
+
+.busy\:pointer-events-none[aria-busy="true"] {
+    pointer-events: none;
+}
+
+/* Estados de live */
+.live\:bg-success[aria-live="polite"] {
+    background-color: var(--success-color);
+}
+
+.live\:text-white[aria-live="polite"] {
+    color: white;
+}
+
+.live\:border-success[aria-live="polite"] {
+    border-color: var(--success-color);
+}
+
+/* Estados de atomic */
+.atomic\:bg-info[aria-atomic="true"] {
+    background-color: var(--info-color);
+}
+
+.atomic\:text-white[aria-atomic="true"] {
+    color: white;
+}
+
+.atomic\:border-info[aria-atomic="true"] {
+    border-color: var(--info-color);
+}
+
+/* Estados de relevant */
+.relevant\:bg-warning[aria-relevant="additions removals"] {
+    background-color: var(--warning-color);
+}
+
+.relevant\:text-white[aria-relevant="additions removals"] {
+    color: white;
+}
+
+.relevant\:border-warning[aria-relevant="additions removals"] {
+    border-color: var(--warning-color);
+}
+
+/* Estados de controls */
+.controls\:bg-primary[aria-controls] {
+    background-color: var(--primary-color);
+}
+
+.controls\:text-white[aria-controls] {
+    color: white;
+}
+
+.controls\:border-primary[aria-controls] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de describedby */
+.describedby\:bg-info[aria-describedby] {
+    background-color: var(--info-color);
+}
+
+.describedby\:text-white[aria-describedby] {
+    color: white;
+}
+
+.describedby\:border-info[aria-describedby] {
+    border-color: var(--info-color);
+}
+
+/* Estados de labelledby */
+.labelledby\:bg-primary[aria-labelledby] {
+    background-color: var(--primary-color);
+}
+
+.labelledby\:text-white[aria-labelledby] {
+    color: white;
+}
+
+.labelledby\:border-primary[aria-labelledby] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de owns */
+.owns\:bg-secondary[aria-owns] {
+    background-color: var(--secondary-color);
+}
+
+.owns\:text-white[aria-owns] {
+    color: white;
+}
+
+.owns\:border-secondary[aria-owns] {
+    border-color: var(--secondary-color);
+}
+
+/* Estados de posinset */
+.posinset\:bg-primary[aria-posinset] {
+    background-color: var(--primary-color);
+}
+
+.posinset\:text-white[aria-posinset] {
+    color: white;
+}
+
+.posinset\:border-primary[aria-posinset] {
+    border-color: var(--primary-color);
+}
+
+/* Estados de setsize */
+.setsize\:bg-secondary[aria-setsize] {
+    background-color: var(--secondary-color);
+}
+
+.setsize\:text-white[aria-setsize] {
+    color: white;
+}
+
+.setsize\:border-secondary[aria-setsize] {
+    border-color: var(--secondary-color);
+}
+
+/* Estados de sort */
+.sort\:bg-info[aria-sort] {
+    background-color: var(--info-color);
+}
+
+.sort\:text-white[aria-sort] {
+    color: white;
+}
+
+.sort\:border-info[aria-sort] {
+    border-color: var(--info-color);
+}
+
+/* Estados de valuemin */
+.valuemin\:bg-warning[aria-valuemin] {
+    background-color: var(--warning-color);
+}
+
+.valuemin\:text-white[aria-valuemin] {
+    color: white;
+}
+
+.valuemin\:border-warning[aria-valuemin] {
+    border-color: var(--warning-color);
+}
+
+/* Estados de valuemax */
+.valuemax\:bg-error[aria-valuemax] {
+    background-color: var(--error-color);
+}
+
+.valuemax\:text-white[aria-valuemax] {
+    color: white;
+}
+
+.valuemax\:border-error[aria-valuemax] {
+    border-color: var(--error-color);
+}
+
+/* Estados de valuenow */
+.valuenow\:bg-success[aria-valuenow] {
+    background-color: var(--success-color);
+}
+
+.valuenow\:text-white[aria-valuenow] {
+    color: white;
+}
+
+.valuenow\:border-success[aria-valuenow] {
+    border-color: var(--success-color);
+}
+
+/* Estados de valuetext */
+.valuetext\:bg-primary[aria-valuetext] {
+    background-color: var(--primary-color);
+}
+
+.valuetext\:text-white[aria-valuetext] {
+    color: white;
+}
+
+.valuetext\:border-primary[aria-valuetext] {
+    border-color: var(--primary-color);
+}
+

@@ -1,0 +1,40 @@
+{
+  "name": "utpservice-website",
+  "version": "1.0.0",
+  "description": "Sitio web profesional de UTP-Service - Empresa de tecnología y redes en Esmeraldas, Ecuador",
+  "main": "src/pages/index.html",
+  "scripts": {
+    "dev": "live-server src/pages --port=3000",
+    "build": "npm run build:css && npm run build:js && npm run build:html",
+    "build:css": "node scripts/build-css.js",
+    "build:js": "node scripts/build-js.js",
+    "build:html": "node scripts/build-html.js",
+    "deploy": "npm run build && rsync -av dist/ user@server:/var/www/utpservice.online/",
+    "lint:css": "stylelint src/styles/**/*.css",
+    "lint:js": "eslint src/scripts/**/*.js",
+    "format": "prettier --write src/**/*.{html,css,js}",
+    "test": "npm run lint:css && npm run lint:js"
+  },
+  "keywords": [
+    "tecnologia",
+    "redes",
+    "soporte-tecnico",
+    "cableado-estructurado",
+    "esmeraldas",
+    "ecuador"
+  ],
+  "author": "UTP-Service",
+  "license": "MIT",
+  "devDependencies": {
+    "live-server": "^1.2.2",
+    "prettier": "^3.0.0",
+    "stylelint": "^15.0.0",
+    "eslint": "^8.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/utpservice/website.git"
+  },
+  "homepage": "https://utpservice.online"
+}
+

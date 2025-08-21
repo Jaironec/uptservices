@@ -1,0 +1,28 @@
+User-agent: *
+Allow: /
+
+# Allow important directories and files
+Allow: /css/
+Allow: /js/
+Allow: /images/
+Allow: /favicon.svg
+Allow: /manifest.json
+
+# Disallow sensitive files
+Disallow: /contact.php
+Disallow: /contact_log.txt
+Disallow: /.htaccess
+Disallow: /nginx.conf
+Disallow: /deploy.md
+Disallow: /domain-config.md
+Disallow: /logo-instructions.md
+
+# SEO optimization
+Crawl-delay: 1
+
+# Sitemap location
+Sitemap: https://utpservice.online/sitemap.xml
+
+# Additional sitemaps for future sections
+Sitemap: https://utpservice.online/sitemap-services.xml
+Sitemap: https://utpservice.online/sitemap-projects.xml
