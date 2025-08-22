@@ -11,14 +11,17 @@ function parseMultipartFormData(body, contentType) {
   const parts = body.split('--' + boundary);
   const formData = {};
   
-  parts.forEach(part => {
+  parts.forEach((part, index) => {
     if (part === '--' || part === '') return;
+    
+    console.log(`🔍 Procesando parte ${index}:`, part.substring(0, 100) + '...');
     
     // Extraer nombre del campo
     const nameMatch = part.match(/name="([^"]+)"/);
     if (!nameMatch) return;
     
     const fieldName = nameMatch[1];
+    console.log(`🔍 Nombre del campo: ${fieldName}`);
     
     // Extraer valor del campo (después de la línea vacía)
     const lines = part.split('\r\n');
@@ -33,9 +36,16 @@ function parseMultipartFormData(body, contentType) {
       }
     }
     
-    // Limpiar el valor
+    console.log(`🔍 Valor antes de limpiar: '${value}'`);
+    
+    // Limpiar el valor - remover headers y boundary
     value = value.trim();
-    value = value.replace(/\r?\n--.*$/, '');
+    value = value.replace(/\r?\n--.*$/, ''); // Remover boundary final
+    value = value.replace(/^Content-Disposition:.*\r?\n?/g, ''); // Remover header Content-Disposition
+    value = value.replace(/^name="[^"]+"\r?\n?/g, ''); // Remover header name
+    value = value.trim(); // Limpiar espacios extra
+    
+    console.log(`🔍 Valor después de limpiar: '${value}'`);
     
     formData[fieldName] = value;
   });
@@ -198,12 +208,14 @@ const server = http.createServer((req, res) => {
         // Agregar los campos del formulario a las variables de entorno
         Object.keys(formData).forEach(key => {
           env[`POST_${key.toUpperCase()}`] = formData[key];
+          console.log(`📤 Variable de entorno creada: POST_${key.toUpperCase()} = '${formData[key]}'`);
         });
         
         // Agregar el body raw también
         env['RAW_POST_DATA'] = body;
         
         console.log(`📤 Variables de entorno POST agregadas`);
+        console.log(`📤 Variables de entorno disponibles:`, Object.keys(env).filter(key => key.startsWith('POST_')));
       } else {
         phpProcess.stdin.end();
       }

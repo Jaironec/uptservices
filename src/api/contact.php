@@ -47,6 +47,17 @@ foreach ($_SERVER as $key => $value) {
     }
 }
 
+// Logging específico de las variables POST_ que esperamos
+$expected_fields = ['nombre', 'email', 'servicio', 'mensaje'];
+foreach ($expected_fields as $field) {
+    $env_key = 'POST_' . strtoupper($field);
+    if (isset($_SERVER[$env_key])) {
+        error_log("✅ Variable de entorno encontrada: $env_key = '{$_SERVER[$env_key]}'");
+    } else {
+        error_log("❌ Variable de entorno NO encontrada: $env_key");
+    }
+}
+
 // Si no hay campos en variables de entorno, intentar con $_POST
 if (empty($input)) {
     error_log("🔍 No se encontraron campos en variables de entorno, usando \$_POST");
