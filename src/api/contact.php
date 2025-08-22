@@ -7,6 +7,11 @@ error_log("🚀 SCRIPT PHP INICIADO - " . date('Y-m-d H:i:s'));
 error_log("🚀 Método: " . ($_SERVER['REQUEST_METHOD'] ?? 'NO DEFINIDO'));
 error_log("🚀 Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'NO DEFINIDO'));
 error_log("🚀 ==========================================");
+
+// Logging adicional para debugging
+error_log("🔍 Script ejecutado desde: " . __FILE__);
+error_log("🔍 Directorio de trabajo: " . getcwd());
+error_log("🔍 Usuario del proceso: " . get_current_user());
 // Incluir configuración
 require_once 'config.php';
 require_once 'gmail-config.php';
@@ -198,6 +203,10 @@ error_log("📧 Asunto: $subject");
 if (isGmailConfigComplete()) {
     error_log("📧 Configuración de Gmail completa, intentando envío SMTP");
     
+    // Verificar si PHPMailer está disponible
+    error_log("📧 Verificando disponibilidad de PHPMailer...");
+    error_log("📧 PHPMailer disponible: " . (class_exists('PHPMailer\PHPMailer\PHPMailer') ? 'SÍ' : 'NO'));
+    
     // Intentar usar PHPMailer si está disponible
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         error_log("📧 Usando PHPMailer con Gmail SMTP");
@@ -205,6 +214,7 @@ if (isGmailConfigComplete()) {
         $mail = new PHPMailer\PHPMailer\PHPMailer(true);
         try {
             $gmail_config = getGmailConfig();
+            error_log("📧 Configuración Gmail: " . print_r($gmail_config, true));
             
             $mail->isSMTP();
             $mail->Host = $gmail_config['host'];
@@ -215,12 +225,19 @@ if (isGmailConfigComplete()) {
             $mail->Port = $gmail_config['port'];
             $mail->Timeout = $gmail_config['timeout'];
             
+            // Configuración adicional para debugging
+            $mail->SMTPDebug = 2; // Habilitar debug SMTP
+            $mail->Debugoutput = function($str, $level) {
+                error_log("📧 SMTP Debug: $str");
+            };
+            
             $mail->setFrom($gmail_config['from_email'], $gmail_config['from_name']);
             $mail->addAddress($to);
             $mail->Subject = $subject;
             $mail->isHTML(true);
             $mail->Body = $email_content;
             
+            error_log("📧 Intentando enviar email con PHPMailer...");
             $mail_sent = $mail->send();
             error_log("✅ Email enviado exitosamente con PHPMailer + Gmail SMTP");
         } catch (Exception $e) {
@@ -252,6 +269,8 @@ if (isGmailConfigComplete()) {
 
 if ($mail_sent) {
     // Email enviado exitosamente
+    error_log("🎉 EMAIL ENVIADO EXITOSAMENTE - Cliente: $nombre, Email: $email");
+    
     echo json_encode([
         'success' => true,
         'message' => 'Solicitud de cotización enviada exitosamente. Te responderemos en menos de 2 horas.',
@@ -270,6 +289,7 @@ if ($mail_sent) {
     
 } else {
     // Error al enviar email
+    error_log("❌ ERROR AL ENVIAR EMAIL - Cliente: $nombre, Email: $email");
     http_response_code(500);
     echo json_encode([
         'error' => 'Error al enviar la solicitud. Por favor, intenta nuevamente o contáctanos directamente.',
