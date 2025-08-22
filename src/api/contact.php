@@ -9,6 +9,7 @@ error_log("🚀 Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'NO DEFINIDO'));
 error_log("🚀 ==========================================");
 // Incluir configuración
 require_once 'config.php';
+require_once 'gmail-config.php';
 
 // Configuración de headers para CORS y JSON
 header('Content-Type: application/json');
@@ -189,17 +190,64 @@ $email_content = "
 </html>
 ";
 
-// Enviar email
+// Enviar email usando Gmail SMTP
 error_log("📧 Intentando enviar email a: $to");
 error_log("📧 Asunto: $subject");
-error_log("📧 Headers: $headers");
 
-$mail_sent = mail($to, $subject, $email_content, $headers);
-
-if ($mail_sent) {
-    error_log("✅ Email enviado exitosamente");
+// Verificar si la configuración de Gmail está completa
+if (isGmailConfigComplete()) {
+    error_log("📧 Configuración de Gmail completa, intentando envío SMTP");
+    
+    // Intentar usar PHPMailer si está disponible
+    if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
+        error_log("📧 Usando PHPMailer con Gmail SMTP");
+        
+        $mail = new PHPMailer\PHPMailer\PHPMailer(true);
+        try {
+            $gmail_config = getGmailConfig();
+            
+            $mail->isSMTP();
+            $mail->Host = $gmail_config['host'];
+            $mail->SMTPAuth = $gmail_config['auth'];
+            $mail->Username = $gmail_config['username'];
+            $mail->Password = $gmail_config['password'];
+            $mail->SMTPSecure = $gmail_config['secure'];
+            $mail->Port = $gmail_config['port'];
+            $mail->Timeout = $gmail_config['timeout'];
+            
+            $mail->setFrom($gmail_config['from_email'], $gmail_config['from_name']);
+            $mail->addAddress($to);
+            $mail->Subject = $subject;
+            $mail->isHTML(true);
+            $mail->Body = $email_content;
+            
+            $mail_sent = $mail->send();
+            error_log("✅ Email enviado exitosamente con PHPMailer + Gmail SMTP");
+        } catch (Exception $e) {
+            error_log("❌ Error con PHPMailer: " . $e->getMessage());
+            $mail_sent = false;
+        }
+    } else {
+        error_log("📧 PHPMailer no disponible, intentando con mail() nativo");
+        $mail_sent = mail($to, $subject, $email_content, $headers);
+        
+        if ($mail_sent) {
+            error_log("✅ Email enviado exitosamente con mail() nativo");
+        } else {
+            error_log("❌ Error enviando email con mail() nativo");
+        }
+    }
 } else {
-    error_log("❌ Error enviando email");
+    error_log("📧 Configuración de Gmail incompleta, usando mail() nativo como fallback");
+    
+    // Fallback a la función mail() nativa
+    $mail_sent = mail($to, $subject, $email_content, $headers);
+    
+    if ($mail_sent) {
+        error_log("✅ Email enviado exitosamente con mail() nativo");
+    } else {
+        error_log("❌ Error enviando email con mail() nativo");
+    }
 }
 
 if ($mail_sent) {
