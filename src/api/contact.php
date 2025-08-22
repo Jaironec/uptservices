@@ -1,4 +1,8 @@
 <?php
+// Habilitar logging de errores
+ini_set('log_errors', 1);
+ini_set('error_log', '/tmp/uptservices_php_error.log');
+error_log("🚀 Script PHP iniciado - " . date('Y-m-d H:i:s'));
 // Incluir configuración
 require_once 'config.php';
 
@@ -18,13 +22,29 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Obtener datos del formulario
 $input = $_POST;
 
+// Debug: Log del input recibido
+error_log("🔍 Input recibido desde \$_POST: " . print_r($input, true));
+error_log("🔍 Raw input: " . file_get_contents('php://input'));
+error_log("🔍 Content-Type: " . $_SERVER['CONTENT_TYPE'] ?? 'No definido');
+error_log("🔍 Request Method: " . $_SERVER['REQUEST_METHOD'] ?? 'No definido');
+error_log("🔍 \$_SERVER completo: " . print_r($_SERVER, true));
+error_log("🔍 \$_POST completo: " . print_r($_POST, true));
+error_log("🔍 \$_FILES completo: " . print_r($_FILES, true));
+
 // Validar datos requeridos
 $required_fields = ['nombre', 'email', 'servicio', 'mensaje'];
 $missing_fields = [];
 
+error_log("🔍 Validando campos requeridos: " . implode(', ', $required_fields));
+error_log("🔍 Campos disponibles en input: " . implode(', ', array_keys($input)));
+
 foreach ($required_fields as $field) {
+    error_log("🔍 Verificando campo '$field': " . (isset($input[$field]) ? $input[$field] : 'NO EXISTE'));
     if (empty($input[$field])) {
         $missing_fields[] = $field;
+        error_log("❌ Campo '$field' está vacío o no existe");
+    } else {
+        error_log("✅ Campo '$field' tiene valor: " . $input[$field]);
     }
 }
 
@@ -117,7 +137,17 @@ $email_content = "
 ";
 
 // Enviar email
+error_log("📧 Intentando enviar email a: $to");
+error_log("📧 Asunto: $subject");
+error_log("📧 Headers: $headers");
+
 $mail_sent = mail($to, $subject, $email_content, $headers);
+
+if ($mail_sent) {
+    error_log("✅ Email enviado exitosamente");
+} else {
+    error_log("❌ Error enviando email");
+}
 
 if ($mail_sent) {
     // Email enviado exitosamente
@@ -128,10 +158,12 @@ if ($mail_sent) {
     ]);
     
     // Log del envío exitoso
+    error_log("📝 Escribiendo log de éxito");
     writeLog("Cotización enviada exitosamente - Cliente: $nombre, Email: $email, Servicio: $servicio");
     
     // Enviar auto-respuesta al cliente
     if (AUTO_REPLY_ENABLED) {
+        error_log("📧 Enviando auto-respuesta a: $email");
         sendAutoReply($email, $nombre, $servicio);
     }
     
@@ -144,9 +176,16 @@ if ($mail_sent) {
     ]);
     
     // Log del error
+    error_log("📝 Escribiendo log de error");
     writeLog("Error al enviar cotización - Cliente: $nombre, Email: $email, Servicio: $servicio");
 }
 
 // Guardar en archivo de log local
-writeLog("$nombre | $email | $telefono | $servicio | $mensaje");
+error_log("📝 Guardando en log local");
+try {
+    writeLog("$nombre | $email | $telefono | $servicio | $mensaje");
+    error_log("✅ Log escrito exitosamente");
+} catch (Exception $e) {
+    error_log("❌ Error escribiendo log: " . $e->getMessage());
+}
 ?>

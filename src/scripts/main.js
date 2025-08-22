@@ -447,7 +447,12 @@ function handleFormSubmission(e) {
     submitBtn.classList.add('loading');
     
     // Enviar datos al backend PHP local
-    console.log('Enviando datos a PHP:', Object.fromEntries(formData));
+    console.log('📤 Enviando datos a PHP:', Object.fromEntries(formData));
+    console.log('📤 FormData entries:');
+    for (let [key, value] of formData.entries()) {
+        console.log(`  ${key}: ${value}`);
+    }
+    
     fetch('/api/contact.php', {
         method: 'POST',
         body: formData

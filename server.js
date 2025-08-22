@@ -44,6 +44,10 @@ const server = http.createServer((req, res) => {
   
   // Manejar archivos PHP con variables de entorno correctas
   if (ext === '.php') {
+    console.log(`🔍 Procesando archivo PHP: ${filePath}`);
+    console.log(`🔍 Método: ${req.method}`);
+    console.log(`🔍 Content-Type: ${req.headers['content-type']}`);
+    
     // Leer el body de la solicitud si es POST
     let body = '';
     req.on('data', chunk => {
@@ -57,7 +61,7 @@ const server = http.createServer((req, res) => {
         REQUEST_METHOD: req.method,
         REQUEST_URI: req.url,
         QUERY_STRING: req.url.split('?')[1] || '',
-        CONTENT_TYPE: req.headers['content-type'] || '',
+        CONTENT_TYPE: req.headers['content-type'] || 'multipart/form-data',
         CONTENT_LENGTH: body.length.toString(),
         HTTP_USER_AGENT: req.headers['user-agent'] || '',
         HTTP_ACCEPT: req.headers['accept'] || '',
@@ -116,6 +120,7 @@ const server = http.createServer((req, res) => {
 
       // Si es POST, enviar el body al stdin de PHP
       if (req.method === 'POST' && body) {
+        console.log(`📤 Enviando body POST a PHP: ${body}`);
         phpProcess.stdin.write(body, 'utf8');
         phpProcess.stdin.end();
       } else {
