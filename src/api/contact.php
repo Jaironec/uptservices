@@ -26,74 +26,42 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Obtener datos del formulario
 $input = [];
 
-// Leer datos desde variables de entorno (método que funcionaba antes)
+// Leer datos desde argumentos de línea de comandos
 $input = [];
 
-// Logging de variables de entorno disponibles
-error_log("🔍 === VARIABLES DE ENTORNO DISPONIBLES ===");
-foreach ($_SERVER as $key => $value) {
-    if (strpos($key, 'POST_') === 0 || strpos($key, 'HTTP_') === 0 || strpos($key, 'REQUEST_') === 0) {
-        error_log("🔍 $key = '$value'");
-    }
-}
-error_log("🔍 === FIN VARIABLES DE ENTORNO ===");
+// Logging de argumentos de línea de comandos
+error_log("🔍 === ARGUMENTOS DE LÍNEA DE COMANDOS ===");
+$argv = $_SERVER['argv'] ?? [];
+error_log("🔍 Argumentos recibidos: " . print_r($argv, true));
 
-// Buscar campos en variables de entorno POST_*
-foreach ($_SERVER as $key => $value) {
-    if (strpos($key, 'POST_') === 0) {
-        $field_name = strtolower(substr($key, 5)); // Remover "POST_" y convertir a minúsculas
-        $input[$field_name] = $value;
-        error_log("🔍 Campo encontrado en variable de entorno: $field_name = '$value'");
-    }
-}
-
-// Logging específico de las variables POST_ que esperamos
-$expected_fields = ['nombre', 'email', 'servicio', 'mensaje'];
-foreach ($expected_fields as $field) {
-    $env_key = 'POST_' . strtoupper($field);
-    if (isset($_SERVER[$env_key])) {
-        error_log("✅ Variable de entorno encontrada: $env_key = '{$_SERVER[$env_key]}'");
-    } else {
-        error_log("❌ Variable de entorno NO encontrada: $env_key");
-    }
-}
-
-// Si no hay campos en variables de entorno, intentar con $_POST
-if (empty($input)) {
-    error_log("🔍 No se encontraron campos en variables de entorno, usando \$_POST");
-    $input = $_POST;
-}
-
-// Si aún no hay datos, intentar con php://input como último recurso
-if (empty($input)) {
-    error_log("🔍 Intentando leer desde php://input como último recurso");
-    $raw_input = file_get_contents('php://input');
-    if ($raw_input) {
-        error_log("🔍 Raw input recibido, longitud: " . strlen($raw_input));
-        
-        // Parsear manualmente el multipart
-        preg_match('/boundary=(.*)$/', $_SERVER['CONTENT_TYPE'], $matches);
-        $boundary = $matches[1] ?? '';
-        
-        if ($boundary) {
-            $parts = explode('--' . $boundary, $raw_input);
-            foreach ($parts as $part) {
-                if (empty($part) || $part === '--') continue;
-                
-                if (preg_match('/name="([^"]+)"/', $part, $name_matches)) {
-                    $field_name = $name_matches[1];
-                    $content_start = strpos($part, "\r\n\r\n");
-                    if ($content_start !== false) {
-                        $field_value = substr($part, $content_start + 4);
-                        $field_value = preg_replace('/\r?\n--.*$/', '', $field_value);
-                        $field_value = trim($field_value);
-                        $input[$field_name] = $field_value;
-                        error_log("🔍 Campo parseado desde raw input: $field_name = '$field_value'");
-                    }
-                }
-            }
+// Parsear argumentos de línea de comandos
+foreach ($argv as $arg) {
+    if (strpos($arg, '--') === 0) {
+        $arg = substr($arg, 2); // Remover --
+        $parts = explode('=', $arg, 2);
+        if (count($parts) === 2) {
+            $field_name = $parts[0];
+            $field_value = $parts[1];
+            $input[$field_name] = $field_value;
+            error_log("🔍 Campo encontrado en argumento: $field_name = '$field_value'");
         }
     }
+}
+
+// Logging específico de los campos que esperamos
+$expected_fields = ['nombre', 'email', 'servicio', 'mensaje'];
+foreach ($expected_fields as $field) {
+    if (isset($input[$field])) {
+        error_log("✅ Campo encontrado: $field = '{$input[$field]}'");
+    } else {
+        error_log("❌ Campo NO encontrado: $field");
+    }
+}
+
+// Fallback: si no hay campos en argumentos, intentar con $_POST
+if (empty($input)) {
+    error_log("🔍 No se encontraron campos en argumentos, usando \$_POST como fallback");
+    $input = $_POST;
 }
 
 // Logging del input final

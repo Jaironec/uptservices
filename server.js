@@ -135,56 +135,46 @@ const server = http.createServer((req, res) => {
       console.log(`  CONTENT_TYPE: ${env.CONTENT_TYPE}`);
       console.log(`  CONTENT_LENGTH: ${env.CONTENT_LENGTH}`);
       console.log(`  SCRIPT_NAME: ${env.SCRIPT_NAME}`);
+      
+      // Logging específico de las variables POST_
+      const postVars = Object.keys(env).filter(key => key.startsWith('POST_'));
+      console.log(`🔍 Variables POST_ que se pasan a PHP:`, postVars);
+      postVars.forEach(key => {
+        console.log(`  ${key}: '${env[key]}'`);
+      });
 
-      // Usar spawn en lugar de exec para mejor control
+      // Usar exec con argumentos para pasar los datos directamente
       console.log(`🔍 Ejecutando PHP: php ${filePath}`);
-      const phpProcess = spawn('php', [filePath], { 
+      
+      // Crear argumentos de línea de comandos para PHP
+      const phpArgs = [filePath];
+      
+      // Agregar los campos como argumentos de línea de comandos
+      Object.keys(formData).forEach(key => {
+        phpArgs.push(`--${key}=${formData[key]}`);
+      });
+      
+      console.log(`🔍 Argumentos PHP:`, phpArgs);
+      
+      const { exec } = require('child_process');
+      const phpProcess = exec(`php ${phpArgs.join(' ')}`, { 
         env,
-        stdio: ['pipe', 'pipe', 'pipe']
-      });
-      
-      console.log(`🔍 Proceso PHP iniciado con PID: ${phpProcess.pid}`);
-      
-      // Agregar timeout para evitar que PHP se cuelgue
-      const timeout = setTimeout(() => {
-        console.log(`⏰ Timeout alcanzado para PHP PID: ${phpProcess.pid}`);
-        phpProcess.kill('SIGKILL');
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          error: 'Timeout del servidor PHP',
-          details: 'El proceso PHP tardó demasiado en responder'
-        }));
-      }, 30000); // 30 segundos
-
-      let stdout = '';
-      let stderr = '';
-
-      phpProcess.stdout.on('data', (data) => {
-        stdout += data.toString();
-        console.log(`📥 PHP stdout chunk: ${data.toString().substring(0, 100)}...`);
-      });
-
-      phpProcess.stderr.on('data', (data) => {
-        stderr += data.toString();
-        console.log(`⚠️ PHP stderr: ${data}`);
-      });
-
-      phpProcess.on('close', (code) => {
-        // Limpiar timeout
-        clearTimeout(timeout);
-        
-        if (code !== 0) {
-          console.log(`❌ Error ejecutando PHP: código de salida ${code}`);
-          console.log(`❌ PHP stderr: ${stderr}`);
+        maxBuffer: 1024 * 1024 // 1MB buffer
+      }, (error, stdout, stderr) => {
+        if (error) {
+          console.log(`❌ Error ejecutando PHP:`, error);
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             error: 'Error interno del servidor PHP',
-            details: `Código de salida: ${code}`,
-            stderr: stderr
+            details: error.message
           }));
           return;
         }
-
+        
+        if (stderr) {
+          console.log(`⚠️ PHP stderr: ${stderr}`);
+        }
+        
         console.log(`✅ Archivo PHP ejecutado exitosamente: ${filePath}`);
         console.log(`📤 Respuesta PHP: ${stdout}`);
         
@@ -216,8 +206,6 @@ const server = http.createServer((req, res) => {
         
         console.log(`📤 Variables de entorno POST agregadas`);
         console.log(`📤 Variables de entorno disponibles:`, Object.keys(env).filter(key => key.startsWith('POST_')));
-      } else {
-        phpProcess.stdin.end();
       }
     });
     return;
