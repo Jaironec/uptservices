@@ -29,6 +29,7 @@ $input = [];
 // Siempre leer desde stdin ya que Node.js envía los datos por ahí
 $raw_input = file_get_contents('php://input');
 error_log("🔍 Raw input recibido, longitud: " . strlen($raw_input));
+error_log("🔍 Raw input (primeros 200 chars): " . substr($raw_input, 0, 200));
 
 if ($raw_input) {
     // Parsear el boundary del Content-Type
@@ -47,25 +48,42 @@ if ($raw_input) {
                 continue;
             }
             
+            error_log("🔍 Procesando parte $index, longitud: " . strlen($part));
+            
             // Extraer nombre del campo
             if (preg_match('/name="([^"]+)"/', $part, $name_matches)) {
                 $field_name = $name_matches[1];
+                error_log("🔍 Nombre del campo encontrado: $field_name");
                 
-                // Extraer valor del campo (después de la línea vacía que separa headers del contenido)
-                $content_start = strpos($part, "\r\n\r\n");
-                if ($content_start !== false) {
-                    $field_value = substr($part, $content_start + 4);
-                    // Remover el boundary final si existe
-                    $field_value = preg_replace('/\r?\n--.*$/', '', $field_value);
-                    $field_value = trim($field_value);
-                    
-                    $input[$field_name] = $field_value;
-                    error_log("🔍 Campo parseado exitosamente: $field_name = '$field_value'");
-                } else {
-                    error_log("🔍 No se pudo encontrar contenido para campo: $field_name");
+                // Buscar la línea vacía que separa headers del contenido
+                $lines = explode("\r\n", $part);
+                $content_start = false;
+                $field_value = '';
+                
+                error_log("🔍 Número de líneas en la parte: " . count($lines));
+                
+                foreach ($lines as $line_num => $line) {
+                    if ($content_start) {
+                        $field_value .= $line . "\r\n";
+                    } elseif (empty(trim($line))) {
+                        $content_start = true;
+                        error_log("🔍 Línea vacía encontrada en posición $line_num");
+                    }
                 }
+                
+                // Limpiar el valor del campo
+                $field_value = trim($field_value);
+                // Remover el boundary final si existe
+                $field_value = preg_replace('/\r?\n--.*$/', '', $field_value);
+                $field_value = trim($field_value);
+                
+                error_log("🔍 Valor del campo antes de limpiar: '$field_value'");
+                
+                $input[$field_name] = $field_value;
+                error_log("🔍 Campo parseado exitosamente: $field_name = '$field_value'");
             } else {
                 error_log("🔍 No se pudo extraer nombre del campo en parte $index");
+                error_log("🔍 Contenido de la parte: " . substr($part, 0, 100));
             }
         }
     } else {
@@ -81,7 +99,28 @@ if (empty($input) && !empty($_POST)) {
     $input = $_POST;
 }
 
-error_log("🔍 Input final procesado: " . print_r($input, true));
+// Fallback adicional: parsing manual más simple
+if (empty($input) && $raw_input) {
+    error_log("🔍 Intentando parsing manual alternativo");
+    
+    // Buscar campos usando regex más simple
+    preg_match_all('/name="([^"]+)"[^>]*\r?\n\r?\n([^-\r\n]+)/', $raw_input, $matches, PREG_SET_ORDER);
+    
+    foreach ($matches as $match) {
+        $field_name = $match[1];
+        $field_value = trim($match[2]);
+        $input[$field_name] = $field_value;
+        error_log("🔍 Parsing alternativo: $field_name = '$field_value'");
+    }
+}
+
+// Logging final del input procesado
+error_log("🔍 === INPUT FINAL PROCESADO ===");
+error_log("🔍 Número de campos: " . count($input));
+error_log("🔍 Campos disponibles: " . implode(', ', array_keys($input)));
+error_log("🔍 Input completo: " . print_r($input, true));
+error_log("🔍 === FIN INPUT ===");
+
 error_log("🔍 \$_FILES completo: " . print_r($_FILES, true));
 error_log("🔍 \$_POST original: " . print_r($_POST, true));
 

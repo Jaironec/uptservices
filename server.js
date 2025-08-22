@@ -94,6 +94,17 @@ const server = http.createServer((req, res) => {
       });
       
       console.log(`🔍 Proceso PHP iniciado con PID: ${phpProcess.pid}`);
+      
+      // Agregar timeout para evitar que PHP se cuelgue
+      const timeout = setTimeout(() => {
+        console.log(`⏰ Timeout alcanzado para PHP PID: ${phpProcess.pid}`);
+        phpProcess.kill('SIGKILL');
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Timeout del servidor PHP',
+          details: 'El proceso PHP tardó demasiado en responder'
+        }));
+      }, 30000); // 30 segundos
 
       let stdout = '';
       let stderr = '';
@@ -109,6 +120,9 @@ const server = http.createServer((req, res) => {
       });
 
       phpProcess.on('close', (code) => {
+        // Limpiar timeout
+        clearTimeout(timeout);
+        
         if (code !== 0) {
           console.log(`❌ Error ejecutando PHP: código de salida ${code}`);
           console.log(`❌ PHP stderr: ${stderr}`);
@@ -142,6 +156,7 @@ const server = http.createServer((req, res) => {
         phpProcess.stdin.end();
         
         console.log(`📤 Body enviado a PHP, longitud: ${body.length}`);
+        console.log(`📤 Body enviado a PHP, primeros 200 chars: ${body.substring(0, 200)}`);
       } else {
         phpProcess.stdin.end();
       }
