@@ -457,25 +457,36 @@ function handleFormSubmission(e) {
         method: 'POST',
         body: formData
     })
-    .then(response => response.json())
+    .then(response => {
+        console.log('📥 Respuesta HTTP recibida:', response);
+        console.log('📥 Status:', response.status);
+        console.log('📥 Headers:', response.headers);
+        return response.json();
+    })
     .then(result => {
+        console.log('📥 Datos JSON recibidos:', result);
+        
         if (result.success) {
             // Éxito
+            console.log('✅ Solicitud exitosa, mostrando notificación');
             showNotification(result.message, 'success');
             
             // Resetear formulario
             e.target.reset();
             
-                    // Tracking del envío exitoso
-        trackFormSubmission(Object.fromEntries(formData));
+            // Tracking del envío exitoso
+            trackFormSubmission(Object.fromEntries(formData));
             
         } else {
             // Error del backend
+            console.log('❌ Error del backend:', result.error);
             showNotification(result.error || 'Error al enviar el mensaje', 'error');
         }
     })
     .catch(error => {
-        console.error('Error al enviar formulario:', error);
+        console.error('❌ Error al enviar formulario:', error);
+        console.error('❌ Tipo de error:', error.name);
+        console.error('❌ Mensaje de error:', error.message);
         showNotification('Error de conexión. Por favor, intenta nuevamente.', 'error');
     })
     .finally(() => {

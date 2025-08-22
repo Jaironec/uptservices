@@ -203,13 +203,47 @@ const server = http.createServer((req, res) => {
         console.log(`✅ Archivo PHP ejecutado exitosamente: ${filePath}`);
         console.log(`📤 Respuesta PHP: ${stdout}`);
         
-        // Configurar headers CORS
-        res.setHeader('Access-Control-Allow-Origin', '*');
-        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
-        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        // Verificar si hay logs de PHP en el sistema
+        console.log(`🔍 Verificando logs de PHP...`);
+        const fs = require('fs');
+        try {
+          if (fs.existsSync('/tmp/uptservices_php_error.log')) {
+            const phpLog = fs.readFileSync('/tmp/uptservices_php_error.log', 'utf8');
+            console.log(`📋 Log de PHP (últimas 10 líneas):`);
+            const lines = phpLog.split('\n').slice(-10);
+            lines.forEach(line => console.log(`  ${line}`));
+          } else {
+            console.log(`📋 Log de PHP no encontrado en /tmp/uptservices_php_error.log`);
+          }
+        } catch (logError) {
+          console.log(`❌ Error leyendo log de PHP:`, logError.message);
+        }
         
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(stdout);
+        try {
+          // Verificar que la respuesta sea JSON válido
+          const jsonResponse = JSON.parse(stdout);
+          console.log(`📤 Respuesta JSON parseada:`, jsonResponse);
+          
+          // Configurar headers CORS
+          res.setHeader('Access-Control-Allow-Origin', '*');
+          res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+          res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+          
+          console.log(`📤 Enviando respuesta HTTP 200 al navegador`);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(stdout);
+          console.log(`✅ Respuesta enviada exitosamente al navegador`);
+          
+        } catch (parseError) {
+          console.log(`❌ Error parseando respuesta JSON:`, parseError);
+          console.log(`❌ Respuesta raw:`, stdout);
+          
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Error en la respuesta del servidor PHP',
+            details: 'La respuesta no es JSON válido'
+          }));
+        }
       });
     });
     return;
