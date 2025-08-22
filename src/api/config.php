@@ -11,7 +11,7 @@ define('WEBSITE_URL', 'https://utpservice.online');
 define('MAX_MESSAGE_LENGTH', 2000);
 define('MAX_NAME_LENGTH', 100);
 define('RATE_LIMIT_MINUTES', 5);
-define('MAX_REQUESTS_PER_HOUR', 10);
+define('MAX_REQUESTS_PER_HOUR', 50); // Aumentado de 10 a 50
 
 // Configuración de Logs
 define('LOG_FILE', __DIR__ . '/logs/contact_log.txt');

@@ -48,6 +48,10 @@ foreach ($argv as $arg) {
         if (count($parts) === 2) {
             $field_name = $parts[0];
             $field_value = $parts[1];
+            
+            // Decodificar caracteres especiales
+            $field_value = urldecode($field_value);
+            
             $input[$field_name] = $field_value;
             error_log("🔍 Campo encontrado en argumento: $field_name = '$field_value'");
         }
@@ -68,6 +72,20 @@ foreach ($expected_fields as $field) {
 if (empty($input)) {
     error_log("🔍 No se encontraron campos en argumentos, usando \$_POST como fallback");
     $input = $_POST;
+}
+
+// Verificar que los campos requeridos tengan contenido completo
+$required_fields = ['nombre', 'email', 'servicio', 'mensaje'];
+foreach ($required_fields as $field) {
+    if (isset($input[$field]) && strlen($input[$field]) < 2) {
+        error_log("⚠️ Campo '$field' muy corto: '{$input[$field]}'");
+        // Intentar leer desde variables de entorno como último recurso
+        $env_key = 'POST_' . strtoupper($field);
+        if (isset($_SERVER[$env_key])) {
+            $input[$field] = $_SERVER[$env_key];
+            error_log("🔄 Campo '$field' corregido desde variable de entorno: '{$input[$field]}'");
+        }
+    }
 }
 
 // Logging del input final

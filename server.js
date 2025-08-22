@@ -174,10 +174,13 @@ const server = http.createServer((req, res) => {
       // Crear argumentos de línea de comandos para PHP
       const phpArgs = [filePath];
       
-      // Agregar los campos como argumentos de línea de comandos
-      Object.keys(formData).forEach(key => {
-        phpArgs.push(`--${key}=${formData[key]}`);
-      });
+              // Agregar los campos como argumentos de línea de comandos
+        Object.keys(formData).forEach(key => {
+          // Codificar el valor para evitar problemas con espacios y caracteres especiales
+          const encodedValue = encodeURIComponent(formData[key]);
+          phpArgs.push(`--${key}=${encodedValue}`);
+          console.log(`📤 Argumento PHP: --${key}=${encodedValue}`);
+        });
       
       console.log(`🔍 Argumentos PHP:`, phpArgs);
       
