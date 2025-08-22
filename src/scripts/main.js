@@ -407,6 +407,8 @@ function showFieldError(field, message) {
 
 // Función para limpiar error de campo
 function clearFieldError(field) {
+    if (!field || !field.parentNode) return;
+    
     const errorDiv = field.parentNode.querySelector('.field-error');
     if (errorDiv) {
         errorDiv.remove();
