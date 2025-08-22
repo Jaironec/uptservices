@@ -1,7 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 
 // Mapeo de extensiones a tipos MIME
 const mimeTypes = {
@@ -24,7 +24,7 @@ const mimeTypes = {
 };
 
 const server = http.createServer((req, res) => {
-  console.log(`Solicitud recibida: ${req.url}`);
+  console.log(`Solicitud recibida: ${req.method} ${req.url}`);
   
   let filePath;
   
@@ -42,27 +42,86 @@ const server = http.createServer((req, res) => {
   const ext = path.extname(filePath);
   const contentType = mimeTypes[ext] || 'text/plain';
   
-  // Manejar archivos PHP
+  // Manejar archivos PHP con variables de entorno correctas
   if (ext === '.php') {
-    // Ejecutar archivo PHP
-    exec(`php "${filePath}"`, (error, stdout, stderr) => {
-      if (error) {
-        console.log(`Error ejecutando PHP: ${error.message}`);
-        res.writeHead(500, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({
-          error: 'Error interno del servidor PHP',
-          details: error.message
-        }));
-        return;
+    // Leer el body de la solicitud si es POST
+    let body = '';
+    req.on('data', chunk => {
+      body += chunk.toString();
+    });
+
+    req.on('end', () => {
+      // Preparar variables de entorno para PHP
+      const env = {
+        ...process.env,
+        REQUEST_METHOD: req.method,
+        REQUEST_URI: req.url,
+        QUERY_STRING: req.url.split('?')[1] || '',
+        CONTENT_TYPE: req.headers['content-type'] || '',
+        CONTENT_LENGTH: body.length.toString(),
+        HTTP_USER_AGENT: req.headers['user-agent'] || '',
+        HTTP_ACCEPT: req.headers['accept'] || '',
+        HTTP_ACCEPT_LANGUAGE: req.headers['accept-language'] || '',
+        HTTP_ACCEPT_ENCODING: req.headers['accept-encoding'] || '',
+        HTTP_CONNECTION: req.headers['connection'] || '',
+        HTTP_HOST: req.headers['host'] || '',
+        REMOTE_ADDR: req.connection.remoteAddress || '',
+        REMOTE_PORT: req.connection.remotePort.toString(),
+        SERVER_NAME: 'localhost',
+        SERVER_PORT: '3000',
+        SERVER_PROTOCOL: 'HTTP/1.1',
+        GATEWAY_INTERFACE: 'CGI/1.1'
+      };
+
+      // Usar spawn en lugar de exec para mejor control
+      const phpProcess = spawn('php', [filePath], { 
+        env,
+        stdio: ['pipe', 'pipe', 'pipe']
+      });
+
+      let stdout = '';
+      let stderr = '';
+
+      phpProcess.stdout.on('data', (data) => {
+        stdout += data.toString();
+      });
+
+      phpProcess.stderr.on('data', (data) => {
+        stderr += data.toString();
+        console.log(`PHP stderr: ${data}`);
+      });
+
+      phpProcess.on('close', (code) => {
+        if (code !== 0) {
+          console.log(`Error ejecutando PHP: código de salida ${code}`);
+          res.writeHead(500, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({
+            error: 'Error interno del servidor PHP',
+            details: `Código de salida: ${code}`,
+            stderr: stderr
+          }));
+          return;
+        }
+
+        console.log(`Archivo PHP ejecutado exitosamente: ${filePath}`);
+        
+        // Configurar headers CORS
+        res.setHeader('Access-Control-Allow-Origin', '*');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+        
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(stdout);
+      });
+
+      // Si es POST, enviar el body al stdin de PHP
+      if (req.method === 'POST' && body) {
+        phpProcess.stdin.write(body);
+        phpProcess.stdin.end();
+      } else {
+        // Para GET, cerrar stdin inmediatamente
+        phpProcess.stdin.end();
       }
-      
-      if (stderr) {
-        console.log(`PHP stderr: ${stderr}`);
-      }
-      
-      console.log(`Archivo PHP ejecutado exitosamente: ${filePath}`);
-      res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(stdout);
     });
     return;
   }
@@ -91,8 +150,8 @@ const server = http.createServer((req, res) => {
 });
 
 const PORT = 3000;
-server.listen(PORT, () => {
-  console.log(`Servidor funcionando en http://127.0.0.1:${PORT}`);
-  console.log(`Página principal: http://127.0.0.1:${PORT}/`);
+server.listen(PORT, '0.0.0.0', () => {
+  console.log(`Servidor funcionando en http://0.0.0.0:${PORT}`);
+  console.log(`Página principal: http://0.0.0.0:${PORT}/`);
   console.log('Presiona Ctrl+C para detener el servidor');
 });
