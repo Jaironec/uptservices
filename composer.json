@@ -1,0 +1,43 @@
+{
+    "name": "uptservices/website",
+    "description": "Website corporativo para UPT Services",
+    "type": "project",
+    "license": "MIT",
+    "version": "2.0.0",
+    "authors": [
+        {
+            "name": "UPT Services",
+            "email": "16cardenas16@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=8.1.0",
+        "ext-curl": "*",
+        "ext-json": "*",
+        "ext-mbstring": "*"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.0",
+        "squizlabs/php_codesniffer": "^3.6"
+    },
+    "autoload": {
+        "psr-4": {
+            "UptServices\\": "src/api/"
+        }
+    },
+    "scripts": {
+        "test": "phpunit",
+        "lint": "phpcs src/api/",
+        "fix": "phpcbf src/api/",
+        "install-production": [
+            "composer install --no-dev --optimize-autoloader"
+        ],
+        "post-install-cmd": [
+            "chmod +x scripts/*.sh"
+        ]
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    }
+}

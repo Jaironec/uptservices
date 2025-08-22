@@ -38,10 +38,10 @@ function initializeNavigation() {
             document.body.classList.toggle('menu-open');
         });
     }
-    
+
     // Cerrar menú al hacer click en un enlace
     navLinks.forEach(link => {
-        link.addEventListener('click', () => {
+            link.addEventListener('click', () => {
             if (navMenu.classList.contains('active')) {
                 hamburger.classList.remove('active');
                 navMenu.classList.remove('active');
@@ -55,16 +55,16 @@ function initializeNavigation() {
         link.addEventListener('click', (e) => {
             const href = link.getAttribute('href');
             if (href.startsWith('#')) {
-                e.preventDefault();
+            e.preventDefault();
                 const target = document.querySelector(href);
-                if (target) {
-                    const headerHeight = document.querySelector('.header').offsetHeight;
+            if (target) {
+                const headerHeight = document.querySelector('.header').offsetHeight;
                     const targetPosition = target.offsetTop - headerHeight - 20;
-                    
-                    window.scrollTo({
-                        top: targetPosition,
-                        behavior: 'smooth'
-                    });
+                
+                window.scrollTo({
+                    top: targetPosition,
+                    behavior: 'smooth'
+                });
                 }
             }
         });
@@ -84,7 +84,7 @@ function initializeNavigation() {
 function initializeProjectFilters() {
     const filterBtns = document.querySelectorAll('.filter-btn');
     const projectCards = document.querySelectorAll('.project-card');
-    
+
     filterBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             const filter = btn.getAttribute('data-filter');
@@ -95,18 +95,18 @@ function initializeProjectFilters() {
             
             // Filtrar proyectos con animación
             projectCards.forEach((card, index) => {
-                if (filter === 'all' || card.getAttribute('data-category') === filter) {
-                    card.style.display = 'block';
+                    if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                        card.style.display = 'block';
                     card.style.animationDelay = `${index * 0.1}s`;
                     card.classList.add('fade-in');
-                } else {
-                    card.style.display = 'none';
+                    } else {
+                        card.style.display = 'none';
                     card.classList.remove('fade-in');
-                }
+                    }
+                });
             });
         });
-    });
-}
+    }
 
 // Función para inicializar WhatsApp con mensajes personalizados
 function initializeWhatsApp() {
@@ -430,9 +430,9 @@ function handleFormSubmission(e) {
     
     if (!isFormValid) {
         showNotification('Por favor, corrige los errores en el formulario', 'error');
-        return;
-    }
-    
+                return;
+            }
+
     // Obtener datos del formulario
     const formData = new FormData(e.target);
     const data = Object.fromEntries(formData);
@@ -445,17 +445,36 @@ function handleFormSubmission(e) {
     submitBtn.disabled = true;
     submitBtn.classList.add('loading');
     
-    // Simular delay de envío
-    setTimeout(() => {
-        // Aquí se conectaría con el backend real
-        console.log('Datos del formulario:', data);
-        
-        // Mostrar mensaje de éxito
-        showNotification('¡Mensaje enviado exitosamente! Te responderemos en menos de 2 horas.', 'success');
-        
-        // Resetear formulario
-        e.target.reset();
-        
+    // Enviar datos al backend PHP local
+    fetch('/api/contact.php', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            // Éxito
+            showNotification(result.message, 'success');
+            
+            // Resetear formulario
+            e.target.reset();
+            
+            // Tracking del envío exitoso
+            trackFormSubmission(data);
+            
+        } else {
+            // Error del backend
+            showNotification(result.error || 'Error al enviar el mensaje', 'error');
+        }
+    })
+    .catch(error => {
+        console.error('Error al enviar formulario:', error);
+        showNotification('Error de conexión. Por favor, intenta nuevamente.', 'error');
+    })
+    .finally(() => {
         // Restaurar botón
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
@@ -465,8 +484,7 @@ function handleFormSubmission(e) {
         inputs.forEach(input => {
             input.classList.remove('error');
         });
-        
-    }, 2000);
+    });
 }
 
 // Función para mostrar notificaciones
@@ -530,7 +548,7 @@ function initializeAnimations() {
         threshold: 0.1,
         rootMargin: '0px 0px -50px 0px'
     };
-    
+
     const observer = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             if (entry.isIntersecting) {
@@ -538,14 +556,14 @@ function initializeAnimations() {
             }
         });
     }, observerOptions);
-    
+
     // Observar elementos para animar
     const animateElements = document.querySelectorAll('.service-card, .project-card, .blog-card, .testimonial-card, .service-item');
     animateElements.forEach(el => {
         el.classList.add('animate-ready');
         observer.observe(el);
     });
-    
+
     // Animación de contadores mejorada
     initializeCounters();
 }
@@ -576,8 +594,8 @@ function initializeCounters() {
         
         // Iniciar contador cuando sea visible
         const statObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
                     updateCounter();
                     statObserver.unobserve(entry.target);
                 }
@@ -615,7 +633,7 @@ function handleHeaderScroll() {
             
             if (currentScrollY > 100) {
                 header.classList.add('scrolled');
-            } else {
+                    } else {
                 header.classList.remove('scrolled');
             }
             

@@ -1,39 +1,58 @@
 {
-  "name": "utpservice-website",
-  "version": "1.0.0",
-  "description": "Sitio web profesional de UTP-Service - Empresa de tecnología y redes en Esmeraldas, Ecuador",
-  "main": "src/pages/index.html",
+  "name": "upt-services-website",
+  "version": "2.0.0",
+  "description": "Website corporativo para UPT Services - Servicios tecnológicos profesionales",
+  "main": "src/scripts/main.js",
   "scripts": {
-    "dev": "live-server src/pages --port=3000",
+    "init": "chmod +x init-project.sh && ./init-project.sh",
+    "dev": "php -S localhost:8000 -t public",
+    "dev:node": "node server.js",
     "build": "npm run build:css && npm run build:js && npm run build:html",
     "build:css": "node scripts/build-css.js",
-    "build:js": "node scripts/build-js.js",
+    "build:js": "node scripts/build-js.js", 
     "build:html": "node scripts/build-html.js",
-    "deploy": "npm run build && rsync -av dist/ user@server:/var/www/utpservice.online/",
-    "lint:css": "stylelint src/styles/**/*.css",
+    "deploy:ubuntu": "chmod +x scripts/install-ubuntu.sh && sudo ./scripts/install-ubuntu.sh",
+    "test:php": "find src/api -name '*.php' -exec php -l {} \\;",
+    "test:server": "curl -I http://localhost:8000",
+    "lint": "npm run lint:js && npm run lint:css",
     "lint:js": "eslint src/scripts/**/*.js",
-    "format": "prettier --write src/**/*.{html,css,js}",
-    "test": "npm run lint:css && npm run lint:js"
+    "lint:css": "stylelint src/styles/**/*.css",
+    "format": "prettier --write src/**/*.{js,css,html}",
+    "logs": "tail -f src/api/logs/contact_log.txt",
+    "monitor": "curl http://localhost/api/monitor.php",
+    "backup": "tar -czf backups/backup_$(date +%Y%m%d_%H%M%S).tar.gz src/ public/ config/",
+    "setup:ubuntu": "sudo apt update && sudo apt install -y apache2 php8.1 php8.1-fpm php8.1-curl php8.1-mbstring",
+    "setup:permissions": "sudo chown -R www-data:www-data /var/www/utpservice && sudo chmod -R 755 /var/www/utpservice"
   },
   "keywords": [
-    "tecnologia",
-    "redes",
+    "upt-services",
+    "servicios-tecnologicos",
     "soporte-tecnico",
+    "redes",
     "cableado-estructurado",
-    "esmeraldas",
-    "ecuador"
+    "website",
+    "php",
+    "apache",
+    "ubuntu"
   ],
-  "author": "UTP-Service",
+  "author": "UPT Services <16cardenas16@gmail.com>",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/uptservices/website.git"
+  },
+  "homepage": "https://utpservice.online",
+  "engines": {
+    "node": ">=14.0.0",
+    "php": ">=8.1.0"
+  },
   "devDependencies": {
     "eslint": "^8.0.0",
     "live-server": "^1.2.0",
     "prettier": "^3.0.0",
     "stylelint": "^15.0.0"
   },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/utpservice/website.git"
-  },
-  "homepage": "https://utpservice.online"
+  "dependencies": {
+    "php": "^1.1.0"
+  }
 }

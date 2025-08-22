@@ -1,6 +1,7 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { exec } = require('child_process');
 
 // Mapeo de extensiones a tipos MIME
 const mimeTypes = {
@@ -18,7 +19,8 @@ const mimeTypes = {
   '.woff': 'font/woff',
   '.woff2': 'font/woff2',
   '.ttf': 'font/ttf',
-  '.eot': 'application/vnd.ms-fontobject'
+  '.eot': 'application/vnd.ms-fontobject',
+  '.php': 'application/x-httpd-php'
 };
 
 const server = http.createServer((req, res) => {
@@ -39,6 +41,31 @@ const server = http.createServer((req, res) => {
   // Obtener la extensión del archivo
   const ext = path.extname(filePath);
   const contentType = mimeTypes[ext] || 'text/plain';
+  
+  // Manejar archivos PHP
+  if (ext === '.php') {
+    // Ejecutar archivo PHP
+    exec(`php "${filePath}"`, (error, stdout, stderr) => {
+      if (error) {
+        console.log(`Error ejecutando PHP: ${error.message}`);
+        res.writeHead(500, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({
+          error: 'Error interno del servidor PHP',
+          details: error.message
+        }));
+        return;
+      }
+      
+      if (stderr) {
+        console.log(`PHP stderr: ${stderr}`);
+      }
+      
+      console.log(`Archivo PHP ejecutado exitosamente: ${filePath}`);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(stdout);
+    });
+    return;
+  }
   
   // Leer el archivo
   fs.readFile(filePath, (err, content) => {
