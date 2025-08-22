@@ -26,10 +26,10 @@
   "author": "UTP-Service",
   "license": "MIT",
   "devDependencies": {
-    "live-server": "^1.2.2",
+    "eslint": "^8.0.0",
+    "live-server": "^1.2.0",
     "prettier": "^3.0.0",
-    "stylelint": "^15.0.0",
-    "eslint": "^8.0.0"
+    "stylelint": "^15.0.0"
   },
   "repository": {
     "type": "git",
@@ -37,4 +37,3 @@
   },
   "homepage": "https://utpservice.online"
 }
-
