@@ -11,7 +11,7 @@
 define('GMAIL_SMTP_HOST', 'smtp.gmail.com');
 define('GMAIL_SMTP_PORT', 587);
 define('GMAIL_SMTP_USERNAME', '16cardenas16@gmail.com');
-define('GMAIL_SMTP_PASSWORD', 'tu_app_password_aqui'); // Reemplaza con tu contraseña de aplicación
+define('GMAIL_SMTP_PASSWORD', 'tiwj yixw gpbt hsab'); // Reemplaza con tu contraseña de aplicación
 
 // Configuración de seguridad
 define('GMAIL_SMTP_SECURE', 'tls'); // tls o ssl
