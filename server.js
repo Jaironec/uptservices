@@ -104,6 +104,7 @@ const server = http.createServer((req, res) => {
         }
 
         console.log(`Archivo PHP ejecutado exitosamente: ${filePath}`);
+        console.log(`Respuesta PHP: ${stdout}`);
         
         // Configurar headers CORS
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -116,6 +117,7 @@ const server = http.createServer((req, res) => {
 
       // Si es POST, enviar el body al stdin de PHP
       if (req.method === 'POST' && body) {
+        console.log(`Enviando body POST a PHP: ${body}`);
         phpProcess.stdin.write(body);
         phpProcess.stdin.end();
       } else {
