@@ -207,6 +207,20 @@ if (isGmailConfigComplete()) {
     error_log("📧 Verificando disponibilidad de PHPMailer...");
     error_log("📧 PHPMailer disponible: " . (class_exists('PHPMailer\PHPMailer\PHPMailer') ? 'SÍ' : 'NO'));
     
+    // Verificar si el archivo de PHPMailer existe
+    $phpmailer_path = __DIR__ . '/../vendor/autoload.php';
+    error_log("📧 Ruta de PHPMailer: $phpmailer_path");
+    error_log("📧 Archivo existe: " . (file_exists($phpmailer_path) ? 'SÍ' : 'NO'));
+    
+    // Intentar cargar PHPMailer si existe
+    if (file_exists($phpmailer_path)) {
+        require_once $phpmailer_path;
+        error_log("📧 PHPMailer cargado desde: $phpmailer_path");
+    }
+    
+    // Verificar nuevamente si PHPMailer está disponible
+    error_log("📧 PHPMailer disponible después de cargar: " . (class_exists('PHPMailer\PHPMailer\PHPMailer') ? 'SÍ' : 'NO'));
+    
     // Intentar usar PHPMailer si está disponible
     if (class_exists('PHPMailer\PHPMailer\PHPMailer')) {
         error_log("📧 Usando PHPMailer con Gmail SMTP");
