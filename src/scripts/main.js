@@ -344,7 +344,7 @@ function validateField(e) {
     let errorMessage = '';
     
     switch(fieldName) {
-        case 'name':
+        case 'nombre':
             if (value.length < 2) {
                 isValid = false;
                 errorMessage = 'El nombre debe tener al menos 2 caracteres';
@@ -357,20 +357,20 @@ function validateField(e) {
                 errorMessage = 'Ingresa un email válido';
             }
             break;
-        case 'phone':
+        case 'telefono':
             const phoneRegex = /^[\+]?[0-9\s\-\(\)]{7,}$/;
             if (!phoneRegex.test(value)) {
                 isValid = false;
                 errorMessage = 'Ingresa un teléfono válido';
             }
             break;
-        case 'service':
+        case 'servicio':
             if (!value) {
                 isValid = false;
                 errorMessage = 'Selecciona un servicio';
             }
             break;
-        case 'message':
+        case 'mensaje':
             if (value.length < 10) {
                 isValid = false;
                 errorMessage = 'El mensaje debe tener al menos 10 caracteres';
@@ -447,12 +447,10 @@ function handleFormSubmission(e) {
     submitBtn.classList.add('loading');
     
     // Enviar datos al backend PHP local
+    console.log('Enviando datos a PHP:', Object.fromEntries(formData));
     fetch('/api/contact.php', {
         method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data)
+        body: formData
     })
     .then(response => response.json())
     .then(result => {
