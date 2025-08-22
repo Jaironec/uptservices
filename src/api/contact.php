@@ -2,7 +2,11 @@
 // Habilitar logging de errores
 ini_set('log_errors', 1);
 ini_set('error_log', '/tmp/uptservices_php_error.log');
-error_log("🚀 Script PHP iniciado - " . date('Y-m-d H:i:s'));
+error_log("🚀 ==========================================");
+error_log("🚀 SCRIPT PHP INICIADO - " . date('Y-m-d H:i:s'));
+error_log("🚀 Método: " . ($_SERVER['REQUEST_METHOD'] ?? 'NO DEFINIDO'));
+error_log("🚀 Content-Type: " . ($_SERVER['CONTENT_TYPE'] ?? 'NO DEFINIDO'));
+error_log("🚀 ==========================================");
 // Incluir configuración
 require_once 'config.php';
 
@@ -22,23 +26,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Obtener datos del formulario
 $input = [];
 
-// Procesar multipart/form-data manualmente si $_POST está vacío
-if (empty($_POST) && strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') !== false) {
-    error_log("🔍 Procesando multipart/form-data manualmente");
-    
-    // Leer el input raw
-    $raw_input = file_get_contents('php://input');
-    error_log("🔍 Raw input length: " . strlen($raw_input));
-    
-    // Parsear el boundary
+// Siempre leer desde stdin ya que Node.js envía los datos por ahí
+$raw_input = file_get_contents('php://input');
+error_log("🔍 Raw input recibido, longitud: " . strlen($raw_input));
+
+if ($raw_input) {
+    // Parsear el boundary del Content-Type
     preg_match('/boundary=(.*)$/', $_SERVER['CONTENT_TYPE'], $matches);
     $boundary = $matches[1] ?? '';
-    error_log("🔍 Boundary: " . $boundary);
+    error_log("🔍 Boundary extraído: " . $boundary);
     
     if ($boundary) {
         // Parsear los campos multipart
         $parts = explode('--' . $boundary, $raw_input);
-        error_log("🔍 Número de partes: " . count($parts));
+        error_log("🔍 Número de partes encontradas: " . count($parts));
         
         foreach ($parts as $index => $part) {
             if (empty($part) || $part === '--') {
@@ -46,55 +47,38 @@ if (empty($_POST) && strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data
                 continue;
             }
             
-            error_log("🔍 Procesando parte $index: " . substr($part, 0, 100) . "...");
-            
             // Extraer nombre del campo
             if (preg_match('/name="([^"]+)"/', $part, $name_matches)) {
                 $field_name = $name_matches[1];
-                error_log("🔍 Nombre del campo encontrado: $field_name");
                 
-                // Extraer valor del campo (después de los headers)
-                $lines = explode("\r\n", $part);
-                $value_started = false;
-                $field_value = '';
-                
-                foreach ($lines as $line) {
-                    if ($value_started) {
-                        $field_value .= $line . "\r\n";
-                    } elseif (empty(trim($line))) {
-                        $value_started = true;
-                    }
+                // Extraer valor del campo (después de la línea vacía que separa headers del contenido)
+                $content_start = strpos($part, "\r\n\r\n");
+                if ($content_start !== false) {
+                    $field_value = substr($part, $content_start + 4);
+                    // Remover el boundary final si existe
+                    $field_value = preg_replace('/\r?\n--.*$/', '', $field_value);
+                    $field_value = trim($field_value);
+                    
+                    $input[$field_name] = $field_value;
+                    error_log("🔍 Campo parseado exitosamente: $field_name = '$field_value'");
+                } else {
+                    error_log("🔍 No se pudo encontrar contenido para campo: $field_name");
                 }
-                
-                $field_value = trim($field_value);
-                $input[$field_name] = $field_value;
-                error_log("🔍 Campo parseado: $field_name = '$field_value'");
             } else {
                 error_log("🔍 No se pudo extraer nombre del campo en parte $index");
             }
         }
+    } else {
+        error_log("❌ No se pudo extraer boundary del Content-Type");
     }
 } else {
-    $input = $_POST;
-    error_log("🔍 Usando \$_POST directamente");
+    error_log("❌ No se recibió input raw");
 }
 
-// Fallback: si aún no tenemos datos, intentar parsear manualmente
-if (empty($input)) {
-    error_log("🔍 Input vacío, intentando fallback manual");
-    
-    $raw_input = file_get_contents('php://input');
-    if ($raw_input) {
-        // Intentar extraer campos simples
-        preg_match_all('/name="([^"]+)"[^>]*>([^<]+)/', $raw_input, $matches, PREG_SET_ORDER);
-        
-        foreach ($matches as $match) {
-            $field_name = $match[1];
-            $field_value = trim($match[2]);
-            $input[$field_name] = $field_value;
-            error_log("🔍 Fallback: $field_name = '$field_value'");
-        }
-    }
+// Fallback: si no se pudo parsear multipart, intentar con $_POST
+if (empty($input) && !empty($_POST)) {
+    error_log("🔍 Usando \$_POST como fallback");
+    $input = $_POST;
 }
 
 error_log("🔍 Input final procesado: " . print_r($input, true));
@@ -105,18 +89,28 @@ error_log("🔍 \$_POST original: " . print_r($_POST, true));
 $required_fields = ['nombre', 'email', 'servicio', 'mensaje'];
 $missing_fields = [];
 
-error_log("🔍 Validando campos requeridos: " . implode(', ', $required_fields));
+error_log("🔍 === VALIDACIÓN DE CAMPOS ===");
+error_log("🔍 Campos requeridos: " . implode(', ', $required_fields));
 error_log("🔍 Campos disponibles en input: " . implode(', ', array_keys($input)));
+error_log("🔍 Input completo: " . print_r($input, true));
 
 foreach ($required_fields as $field) {
-    error_log("🔍 Verificando campo '$field': " . (isset($input[$field]) ? $input[$field] : 'NO EXISTE'));
-    if (empty($input[$field])) {
-        $missing_fields[] = $field;
-        error_log("❌ Campo '$field' está vacío o no existe");
+    if (isset($input[$field])) {
+        $value = $input[$field];
+        if (empty($value)) {
+            $missing_fields[] = $field;
+            error_log("❌ Campo '$field' existe pero está vacío");
+        } else {
+            error_log("✅ Campo '$field' válido: '$value'");
+        }
     } else {
-        error_log("✅ Campo '$field' tiene valor: " . $input[$field]);
+        $missing_fields[] = $field;
+        error_log("❌ Campo '$field' NO EXISTE en el input");
     }
 }
+
+error_log("🔍 Campos faltantes: " . implode(', ', $missing_fields));
+error_log("🔍 === FIN VALIDACIÓN ===");
 
 if (!empty($missing_fields)) {
     http_response_code(400);
@@ -258,4 +252,8 @@ try {
 } catch (Exception $e) {
     error_log("❌ Error escribiendo log: " . $e->getMessage());
 }
+
+error_log("🏁 ==========================================");
+error_log("🏁 SCRIPT PHP FINALIZADO - " . date('Y-m-d H:i:s'));
+error_log("🏁 ==========================================");
 ?>
