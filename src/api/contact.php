@@ -26,95 +26,66 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 // Obtener datos del formulario
 $input = [];
 
-// Siempre leer desde stdin ya que Node.js envía los datos por ahí
-$raw_input = file_get_contents('php://input');
-error_log("🔍 Raw input recibido, longitud: " . strlen($raw_input));
-error_log("🔍 Raw input (primeros 200 chars): " . substr($raw_input, 0, 200));
+// Leer datos desde variables de entorno (método que funcionaba antes)
+$input = [];
 
-if ($raw_input) {
-    // Parsear el boundary del Content-Type
-    preg_match('/boundary=(.*)$/', $_SERVER['CONTENT_TYPE'], $matches);
-    $boundary = $matches[1] ?? '';
-    error_log("🔍 Boundary extraído: " . $boundary);
-    
-    if ($boundary) {
-        // Parsear los campos multipart
-        $parts = explode('--' . $boundary, $raw_input);
-        error_log("🔍 Número de partes encontradas: " . count($parts));
-        
-        foreach ($parts as $index => $part) {
-            if (empty($part) || $part === '--') {
-                error_log("🔍 Parte $index: vacía o boundary final");
-                continue;
-            }
-            
-            error_log("🔍 Procesando parte $index, longitud: " . strlen($part));
-            
-            // Extraer nombre del campo
-            if (preg_match('/name="([^"]+)"/', $part, $name_matches)) {
-                $field_name = $name_matches[1];
-                error_log("🔍 Nombre del campo encontrado: $field_name");
-                
-                // Buscar la línea vacía que separa headers del contenido
-                $lines = explode("\r\n", $part);
-                $content_start = false;
-                $field_value = '';
-                
-                error_log("🔍 Número de líneas en la parte: " . count($lines));
-                
-                foreach ($lines as $line_num => $line) {
-                    if ($content_start) {
-                        $field_value .= $line . "\r\n";
-                    } elseif (empty(trim($line))) {
-                        $content_start = true;
-                        error_log("🔍 Línea vacía encontrada en posición $line_num");
-                    }
-                }
-                
-                // Limpiar el valor del campo
-                $field_value = trim($field_value);
-                // Remover el boundary final si existe
-                $field_value = preg_replace('/\r?\n--.*$/', '', $field_value);
-                $field_value = trim($field_value);
-                
-                error_log("🔍 Valor del campo antes de limpiar: '$field_value'");
-                
-                $input[$field_name] = $field_value;
-                error_log("🔍 Campo parseado exitosamente: $field_name = '$field_value'");
-            } else {
-                error_log("🔍 No se pudo extraer nombre del campo en parte $index");
-                error_log("🔍 Contenido de la parte: " . substr($part, 0, 100));
-            }
-        }
-    } else {
-        error_log("❌ No se pudo extraer boundary del Content-Type");
+// Logging de variables de entorno disponibles
+error_log("🔍 === VARIABLES DE ENTORNO DISPONIBLES ===");
+foreach ($_SERVER as $key => $value) {
+    if (strpos($key, 'POST_') === 0 || strpos($key, 'HTTP_') === 0 || strpos($key, 'REQUEST_') === 0) {
+        error_log("🔍 $key = '$value'");
     }
-} else {
-    error_log("❌ No se recibió input raw");
+}
+error_log("🔍 === FIN VARIABLES DE ENTORNO ===");
+
+// Buscar campos en variables de entorno POST_*
+foreach ($_SERVER as $key => $value) {
+    if (strpos($key, 'POST_') === 0) {
+        $field_name = strtolower(substr($key, 5)); // Remover "POST_" y convertir a minúsculas
+        $input[$field_name] = $value;
+        error_log("🔍 Campo encontrado en variable de entorno: $field_name = '$value'");
+    }
 }
 
-// Fallback: si no se pudo parsear multipart, intentar con $_POST
-if (empty($input) && !empty($_POST)) {
-    error_log("🔍 Usando \$_POST como fallback");
+// Si no hay campos en variables de entorno, intentar con $_POST
+if (empty($input)) {
+    error_log("🔍 No se encontraron campos en variables de entorno, usando \$_POST");
     $input = $_POST;
 }
 
-// Fallback adicional: parsing manual más simple
-if (empty($input) && $raw_input) {
-    error_log("🔍 Intentando parsing manual alternativo");
-    
-    // Buscar campos usando regex más simple
-    preg_match_all('/name="([^"]+)"[^>]*\r?\n\r?\n([^-\r\n]+)/', $raw_input, $matches, PREG_SET_ORDER);
-    
-    foreach ($matches as $match) {
-        $field_name = $match[1];
-        $field_value = trim($match[2]);
-        $input[$field_name] = $field_value;
-        error_log("🔍 Parsing alternativo: $field_name = '$field_value'");
+// Si aún no hay datos, intentar con php://input como último recurso
+if (empty($input)) {
+    error_log("🔍 Intentando leer desde php://input como último recurso");
+    $raw_input = file_get_contents('php://input');
+    if ($raw_input) {
+        error_log("🔍 Raw input recibido, longitud: " . strlen($raw_input));
+        
+        // Parsear manualmente el multipart
+        preg_match('/boundary=(.*)$/', $_SERVER['CONTENT_TYPE'], $matches);
+        $boundary = $matches[1] ?? '';
+        
+        if ($boundary) {
+            $parts = explode('--' . $boundary, $raw_input);
+            foreach ($parts as $part) {
+                if (empty($part) || $part === '--') continue;
+                
+                if (preg_match('/name="([^"]+)"/', $part, $name_matches)) {
+                    $field_name = $name_matches[1];
+                    $content_start = strpos($part, "\r\n\r\n");
+                    if ($content_start !== false) {
+                        $field_value = substr($part, $content_start + 4);
+                        $field_value = preg_replace('/\r?\n--.*$/', '', $field_value);
+                        $field_value = trim($field_value);
+                        $input[$field_name] = $field_value;
+                        error_log("🔍 Campo parseado desde raw input: $field_name = '$field_value'");
+                    }
+                }
+            }
+        }
     }
 }
 
-// Logging final del input procesado
+// Logging del input final
 error_log("🔍 === INPUT FINAL PROCESADO ===");
 error_log("🔍 Número de campos: " . count($input));
 error_log("🔍 Campos disponibles: " . implode(', ', array_keys($input)));

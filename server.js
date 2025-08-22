@@ -3,6 +3,46 @@ const fs = require('fs');
 const path = require('path');
 const { spawn } = require('child_process');
 
+// Función para parsear multipart/form-data
+function parseMultipartFormData(body, contentType) {
+  const boundary = contentType.match(/boundary=(.*)$/)?.[1];
+  if (!boundary) return {};
+  
+  const parts = body.split('--' + boundary);
+  const formData = {};
+  
+  parts.forEach(part => {
+    if (part === '--' || part === '') return;
+    
+    // Extraer nombre del campo
+    const nameMatch = part.match(/name="([^"]+)"/);
+    if (!nameMatch) return;
+    
+    const fieldName = nameMatch[1];
+    
+    // Extraer valor del campo (después de la línea vacía)
+    const lines = part.split('\r\n');
+    let value = '';
+    let foundEmptyLine = false;
+    
+    for (let line of lines) {
+      if (foundEmptyLine) {
+        value += line + '\r\n';
+      } else if (line.trim() === '') {
+        foundEmptyLine = true;
+      }
+    }
+    
+    // Limpiar el valor
+    value = value.trim();
+    value = value.replace(/\r?\n--.*$/, '');
+    
+    formData[fieldName] = value;
+  });
+  
+  return formData;
+}
+
 // Mapeo de extensiones a tipos MIME
 const mimeTypes = {
   '.html': 'text/html',
@@ -151,12 +191,19 @@ const server = http.createServer((req, res) => {
       if (req.method === 'POST' && body) {
         console.log(`📤 Enviando body POST a PHP: ${body}`);
         
-        // Asegurar que PHP reciba el body completo
-        phpProcess.stdin.write(body, 'utf8');
-        phpProcess.stdin.end();
+        // Parsear el body y enviarlo como variables de entorno
+        const formData = parseMultipartFormData(body, req.headers['content-type']);
+        console.log(`📤 FormData parseado:`, formData);
         
-        console.log(`📤 Body enviado a PHP, longitud: ${body.length}`);
-        console.log(`📤 Body enviado a PHP, primeros 200 chars: ${body.substring(0, 200)}`);
+        // Agregar los campos del formulario a las variables de entorno
+        Object.keys(formData).forEach(key => {
+          env[`POST_${key.toUpperCase()}`] = formData[key];
+        });
+        
+        // Agregar el body raw también
+        env['RAW_POST_DATA'] = body;
+        
+        console.log(`📤 Variables de entorno POST agregadas`);
       } else {
         phpProcess.stdin.end();
       }
