@@ -437,7 +437,6 @@ function handleFormSubmission(e) {
 
     // Obtener datos del formulario
     const formData = new FormData(e.target);
-    const data = Object.fromEntries(formData);
     
     // Simular envío con estado de carga
     const submitBtn = e.target.querySelector('button[type="submit"]');
@@ -464,8 +463,8 @@ function handleFormSubmission(e) {
             // Resetear formulario
             e.target.reset();
             
-            // Tracking del envío exitoso
-            trackFormSubmission(data);
+                    // Tracking del envío exitoso
+        trackFormSubmission(Object.fromEntries(formData));
             
         } else {
             // Error del backend
