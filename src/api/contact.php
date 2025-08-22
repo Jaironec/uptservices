@@ -16,12 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Obtener datos del formulario
-$raw_input = file_get_contents('php://input');
-$input = json_decode($raw_input, true);
-
-// Debug: Log del input recibido
-error_log("Raw input recibido: " . $raw_input);
-error_log("Input decodificado: " . print_r($input, true));
+$input = json_decode(file_get_contents('php://input'), true);
 
 // Validar datos requeridos
 $required_fields = ['nombre', 'email', 'servicio', 'mensaje'];
