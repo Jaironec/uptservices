@@ -20,16 +20,86 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 // Obtener datos del formulario
-$input = $_POST;
+$input = [];
 
-// Debug: Log del input recibido
-error_log("🔍 Input recibido desde \$_POST: " . print_r($input, true));
-error_log("🔍 Raw input: " . file_get_contents('php://input'));
-error_log("🔍 Content-Type: " . $_SERVER['CONTENT_TYPE'] ?? 'No definido');
-error_log("🔍 Request Method: " . $_SERVER['REQUEST_METHOD'] ?? 'No definido');
-error_log("🔍 \$_SERVER completo: " . print_r($_SERVER, true));
-error_log("🔍 \$_POST completo: " . print_r($_POST, true));
+// Procesar multipart/form-data manualmente si $_POST está vacío
+if (empty($_POST) && strpos($_SERVER['CONTENT_TYPE'] ?? '', 'multipart/form-data') !== false) {
+    error_log("🔍 Procesando multipart/form-data manualmente");
+    
+    // Leer el input raw
+    $raw_input = file_get_contents('php://input');
+    error_log("🔍 Raw input length: " . strlen($raw_input));
+    
+    // Parsear el boundary
+    preg_match('/boundary=(.*)$/', $_SERVER['CONTENT_TYPE'], $matches);
+    $boundary = $matches[1] ?? '';
+    error_log("🔍 Boundary: " . $boundary);
+    
+    if ($boundary) {
+        // Parsear los campos multipart
+        $parts = explode('--' . $boundary, $raw_input);
+        error_log("🔍 Número de partes: " . count($parts));
+        
+        foreach ($parts as $index => $part) {
+            if (empty($part) || $part === '--') {
+                error_log("🔍 Parte $index: vacía o boundary final");
+                continue;
+            }
+            
+            error_log("🔍 Procesando parte $index: " . substr($part, 0, 100) . "...");
+            
+            // Extraer nombre del campo
+            if (preg_match('/name="([^"]+)"/', $part, $name_matches)) {
+                $field_name = $name_matches[1];
+                error_log("🔍 Nombre del campo encontrado: $field_name");
+                
+                // Extraer valor del campo (después de los headers)
+                $lines = explode("\r\n", $part);
+                $value_started = false;
+                $field_value = '';
+                
+                foreach ($lines as $line) {
+                    if ($value_started) {
+                        $field_value .= $line . "\r\n";
+                    } elseif (empty(trim($line))) {
+                        $value_started = true;
+                    }
+                }
+                
+                $field_value = trim($field_value);
+                $input[$field_name] = $field_value;
+                error_log("🔍 Campo parseado: $field_name = '$field_value'");
+            } else {
+                error_log("🔍 No se pudo extraer nombre del campo en parte $index");
+            }
+        }
+    }
+} else {
+    $input = $_POST;
+    error_log("🔍 Usando \$_POST directamente");
+}
+
+// Fallback: si aún no tenemos datos, intentar parsear manualmente
+if (empty($input)) {
+    error_log("🔍 Input vacío, intentando fallback manual");
+    
+    $raw_input = file_get_contents('php://input');
+    if ($raw_input) {
+        // Intentar extraer campos simples
+        preg_match_all('/name="([^"]+)"[^>]*>([^<]+)/', $raw_input, $matches, PREG_SET_ORDER);
+        
+        foreach ($matches as $match) {
+            $field_name = $match[1];
+            $field_value = trim($match[2]);
+            $input[$field_name] = $field_value;
+            error_log("🔍 Fallback: $field_name = '$field_value'");
+        }
+    }
+}
+
+error_log("🔍 Input final procesado: " . print_r($input, true));
 error_log("🔍 \$_FILES completo: " . print_r($_FILES, true));
+error_log("🔍 \$_POST original: " . print_r($_POST, true));
 
 // Validar datos requeridos
 $required_fields = ['nombre', 'email', 'servicio', 'mensaje'];

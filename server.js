@@ -74,30 +74,44 @@ const server = http.createServer((req, res) => {
         SERVER_NAME: 'localhost',
         SERVER_PORT: '3000',
         SERVER_PROTOCOL: 'HTTP/1.1',
-        GATEWAY_INTERFACE: 'CGI/1.1'
+        GATEWAY_INTERFACE: 'CGI/1.1',
+        SCRIPT_NAME: filePath,
+        SCRIPT_FILENAME: filePath,
+        DOCUMENT_ROOT: path.dirname(filePath)
       };
+      
+      console.log(`🔍 Variables de entorno para PHP:`);
+      console.log(`  REQUEST_METHOD: ${env.REQUEST_METHOD}`);
+      console.log(`  CONTENT_TYPE: ${env.CONTENT_TYPE}`);
+      console.log(`  CONTENT_LENGTH: ${env.CONTENT_LENGTH}`);
+      console.log(`  SCRIPT_NAME: ${env.SCRIPT_NAME}`);
 
       // Usar spawn en lugar de exec para mejor control
+      console.log(`🔍 Ejecutando PHP: php ${filePath}`);
       const phpProcess = spawn('php', [filePath], { 
         env,
         stdio: ['pipe', 'pipe', 'pipe']
       });
+      
+      console.log(`🔍 Proceso PHP iniciado con PID: ${phpProcess.pid}`);
 
       let stdout = '';
       let stderr = '';
 
       phpProcess.stdout.on('data', (data) => {
         stdout += data.toString();
+        console.log(`📥 PHP stdout chunk: ${data.toString().substring(0, 100)}...`);
       });
 
       phpProcess.stderr.on('data', (data) => {
         stderr += data.toString();
-        console.log(`PHP stderr: ${data}`);
+        console.log(`⚠️ PHP stderr: ${data}`);
       });
 
       phpProcess.on('close', (code) => {
         if (code !== 0) {
-          console.log(`Error ejecutando PHP: código de salida ${code}`);
+          console.log(`❌ Error ejecutando PHP: código de salida ${code}`);
+          console.log(`❌ PHP stderr: ${stderr}`);
           res.writeHead(500, { 'Content-Type': 'application/json' });
           res.end(JSON.stringify({
             error: 'Error interno del servidor PHP',
@@ -107,7 +121,8 @@ const server = http.createServer((req, res) => {
           return;
         }
 
-        console.log(`Archivo PHP ejecutado exitosamente: ${filePath}`);
+        console.log(`✅ Archivo PHP ejecutado exitosamente: ${filePath}`);
+        console.log(`📤 Respuesta PHP: ${stdout}`);
         
         // Configurar headers CORS
         res.setHeader('Access-Control-Allow-Origin', '*');
@@ -121,8 +136,12 @@ const server = http.createServer((req, res) => {
       // Si es POST, enviar el body al stdin de PHP
       if (req.method === 'POST' && body) {
         console.log(`📤 Enviando body POST a PHP: ${body}`);
+        
+        // Asegurar que PHP reciba el body completo
         phpProcess.stdin.write(body, 'utf8');
         phpProcess.stdin.end();
+        
+        console.log(`📤 Body enviado a PHP, longitud: ${body.length}`);
       } else {
         phpProcess.stdin.end();
       }
