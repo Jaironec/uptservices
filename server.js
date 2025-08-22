@@ -137,6 +137,31 @@ const server = http.createServer((req, res) => {
       console.log(`  SCRIPT_NAME: ${env.SCRIPT_NAME}`);
       
       // Logging específico de las variables POST_
+      // Variable para almacenar los datos del formulario
+      let formData = {};
+      
+      // Si es POST, procesar el body
+      if (req.method === 'POST' && body) {
+        console.log(`📤 Enviando body POST a PHP: ${body}`);
+        
+        // Parsear el body
+        formData = parseMultipartFormData(body, req.headers['content-type']);
+        console.log(`📤 FormData parseado:`, formData);
+        
+        // Agregar los campos del formulario a las variables de entorno
+        Object.keys(formData).forEach(key => {
+          env[`POST_${key.toUpperCase()}`] = formData[key];
+          console.log(`📤 Variable de entorno creada: POST_${key.toUpperCase()} = '${formData[key]}'`);
+        });
+        
+        // Agregar el body raw también
+        env['RAW_POST_DATA'] = body;
+        
+        console.log(`📤 Variables de entorno POST agregadas`);
+        console.log(`📤 Variables de entorno disponibles:`, Object.keys(env).filter(key => key.startsWith('POST_')));
+      }
+      
+      // Logging de variables de entorno
       const postVars = Object.keys(env).filter(key => key.startsWith('POST_'));
       console.log(`🔍 Variables POST_ que se pasan a PHP:`, postVars);
       postVars.forEach(key => {
@@ -186,27 +211,6 @@ const server = http.createServer((req, res) => {
         res.writeHead(200, { 'Content-Type': 'application/json' });
         res.end(stdout);
       });
-
-      // Si es POST, enviar el body al stdin de PHP
-      if (req.method === 'POST' && body) {
-        console.log(`📤 Enviando body POST a PHP: ${body}`);
-        
-        // Parsear el body y enviarlo como variables de entorno
-        const formData = parseMultipartFormData(body, req.headers['content-type']);
-        console.log(`📤 FormData parseado:`, formData);
-        
-        // Agregar los campos del formulario a las variables de entorno
-        Object.keys(formData).forEach(key => {
-          env[`POST_${key.toUpperCase()}`] = formData[key];
-          console.log(`📤 Variable de entorno creada: POST_${key.toUpperCase()} = '${formData[key]}'`);
-        });
-        
-        // Agregar el body raw también
-        env['RAW_POST_DATA'] = body;
-        
-        console.log(`📤 Variables de entorno POST agregadas`);
-        console.log(`📤 Variables de entorno disponibles:`, Object.keys(env).filter(key => key.startsWith('POST_')));
-      }
     });
     return;
   }
